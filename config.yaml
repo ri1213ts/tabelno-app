@@ -1,0 +1,6 @@
+# ユーザーの認証情報（ユーザー名・パスワード）はFirestoreに保存されるようになったため、
+# ここにはログイン状態を保持するcookieの設定だけを残しています。
+cookie:
+  name: tabelno_auth_cookie
+  key: change_this_to_your_own_random_string_12345  # 自分だけのランダムな文字列に変更してください
+  expiry_days: 30
