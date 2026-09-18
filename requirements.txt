@@ -1,0 +1,7 @@
+streamlit
+google-genai
+firebase-admin
+pandas
+plotly
+streamlit-authenticator
+pyyaml
