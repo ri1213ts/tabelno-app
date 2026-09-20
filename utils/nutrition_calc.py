@@ -23,9 +23,17 @@ NUTRIENT_LABELS = {
     "fiber_g": "食物繊維",
 }
 
-# 成人の1日あたりの目安量（簡易版）。
-# 実際の「日本人の食事摂取基準」は性別・年齢・活動量によって細かく分かれているが、
-# フェーズ3ではMVPとして、平均的な成人の目安値1セットのみを採用している。
+NUTRIENT_UNITS = {
+    "energy_kcal": "kcal",
+    "protein_g": "g",
+    "fat_g": "g",
+    "carb_g": "g",
+    "iron_mg": "mg",
+    "calcium_mg": "mg",
+    "vitamin_c_mg": "mg",
+    "fiber_g": "g",
+}
+
 DAILY_TARGETS = {
     "energy_kcal": 2200,
     "protein_g": 60,
@@ -39,8 +47,6 @@ DAILY_TARGETS = {
 
 COUNT_UNITS = ("個", "本", "枚", "パック", "缶", "丁", "袋", "株", "玉", "杯", "切れ", "束")
 
-# AIの認識結果が表記ゆれする場合に備えた簡易的な言い換え辞書。
-# 完全ではないが、よくあるパターンだけ先にデータベースの表記へ揃えておく。
 ALIASES = {
     "たまご": "卵",
     "玉子": "卵",
@@ -65,7 +71,6 @@ ALIASES = {
 
 
 def normalize_ingredient_name(name):
-    """表記ゆれをデータベース側の表記に近づける"""
     for alias, canonical in ALIASES.items():
         if alias in name:
             return name.replace(alias, canonical)
@@ -73,14 +78,12 @@ def normalize_ingredient_name(name):
 
 
 def load_nutrition_data():
-    """食品成分データ(簡易版)をCSVから読み込む"""
     return pd.read_csv("data/nutrition_data.csv")
 
 
 def parse_quantity_to_grams(quantity_text, unit_weight_g):
-    """AIが返した「3個」「500ml」のような文字列を、おおよそのグラム数に変換する"""
     if not quantity_text:
-        return 100.0  # 情報が無い場合は標準的な1食分とみなす
+        return 100.0
 
     match = re.search(r"([\d.]+)\s*([^\d.\s]*)", str(quantity_text))
     if not match:
@@ -92,19 +95,17 @@ def parse_quantity_to_grams(quantity_text, unit_weight_g):
     if unit in ("g", "グラム"):
         return number
     if unit in ("ml", "ミリリットル"):
-        return number  # 液体は 1ml ≒ 1g として簡易換算
+        return number
     if unit == "大さじ":
         return number * 15
     if unit in COUNT_UNITS:
         base = unit_weight_g if pd.notna(unit_weight_g) else 100
         return number * base
 
-    # 単位が認識できない場合は、数値をそのままグラムとみなす
     return number
 
 
 def match_ingredient(name, nutrition_df):
-    """食材名を、データベースの中から部分一致で探す"""
     for _, row in nutrition_df.iterrows():
         if row["name"] in name or name in row["name"]:
             return row
@@ -112,7 +113,6 @@ def match_ingredient(name, nutrition_df):
 
 
 def calculate_nutrition(ingredients, nutrition_df):
-    """食材リストから、栄養素の合計とマッチしなかった食材名を計算する"""
     totals = {n: 0.0 for n in NUTRIENTS}
     unmatched = []
 
@@ -139,7 +139,6 @@ def calculate_nutrition(ingredients, nutrition_df):
 
 
 def calculate_fulfillment(totals):
-    """目標量に対する充足率(%)を、栄養素ごとに計算する"""
     fulfillment = {}
     for n in NUTRIENTS:
         target = DAILY_TARGETS[n]
