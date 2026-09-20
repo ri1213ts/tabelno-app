@@ -11,16 +11,20 @@ def get_firestore_client():
     return firestore.client()
 
 
-def save_meal_log(username, title, date_str):
-    """「何を食べたか」の記録を1件、Firestoreに保存する"""
+def save_meal_log(username, title, date_str, nutrition_totals=None):
+    """「何を食べたか」の記録を1件、Firestoreに保存する。
+    nutrition_totals を渡すと、その料理のカロリー・栄養素も一緒に記録される。
+    """
     db = get_firestore_client()
-    db.collection("users").document(username).collection("meal_logs").add(
-        {
-            "title": title,
-            "date": date_str,
-            "created_at": firestore.SERVER_TIMESTAMP,
-        }
-    )
+    data = {
+        "title": title,
+        "date": date_str,
+        "created_at": firestore.SERVER_TIMESTAMP,
+    }
+    if nutrition_totals:
+        data["nutrition"] = {k: round(v, 1) for k, v in nutrition_totals.items()}
+
+    db.collection("users").document(username).collection("meal_logs").add(data)
 
 
 def get_meal_logs(username, limit=10):
